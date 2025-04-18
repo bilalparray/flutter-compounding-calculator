@@ -1,11 +1,9 @@
-
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:math';
 import 'package:flutter/services.dart';
-
 
 const String _bannerAdUnitId = 'ca-app-pub-3940256099942544/6300978111';
 
@@ -25,7 +23,7 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   ThemeMode _themeMode = ThemeMode.system;
   int _precision = 2;
-String _currency = '\$';
+  String _currency = '\$';
 
   @override
   void initState() {
@@ -36,9 +34,9 @@ String _currency = '\$';
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _themeMode = (prefs.getBool('darkMode') ?? false) ? ThemeMode.dark : ThemeMode.light;
+      _themeMode = (prefs.getBool('darkMode')) ?? false ? ThemeMode.dark : ThemeMode.light;
       _precision = prefs.getInt('precision') ?? 2;
-     _currency = prefs.getString('currency') ?? '\$';
+      _currency = prefs.getString('currency') ?? '\$';
     });
   }
 
@@ -46,8 +44,20 @@ String _currency = '\$';
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Compounding Calculator',
-      theme: ThemeData.light(),
-      darkTheme: ThemeData.dark(),
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.blueAccent,
+          brightness: Brightness.light,
+        ),
+        useMaterial3: true,
+      ),
+      darkTheme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.blueAccent,
+          brightness: Brightness.dark,
+        ),
+        useMaterial3: true,
+      ),
       themeMode: _themeMode,
       home: HomePage(
         onSettingsChanged: _loadSettings,
@@ -63,7 +73,12 @@ class HomePage extends StatefulWidget {
   final int precision;
   final String currency;
 
-  const HomePage({super.key, required this.onSettingsChanged, required this.precision, required this.currency});
+  const HomePage({
+    super.key,
+    required this.onSettingsChanged,
+    required this.precision,
+    required this.currency,
+  });
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -94,7 +109,7 @@ class _HomePageState extends State<HomePage> {
         onAdLoaded: (_) => setState(() => _isAdLoaded = true),
         onAdFailedToLoad: (ad, error) {
           ad.dispose();
-          debugPrint('BannerAd failed to load: \$error');
+          debugPrint('BannerAd failed to load: $error');
         },
       ),
     )..load();
@@ -114,108 +129,37 @@ class _HomePageState extends State<HomePage> {
     final double P = double.parse(_principalController.text);
     final double r = double.parse(_rateController.text) / 100;
     final double tInput = double.parse(_timeController.text);
-    double t;
+    double t = tInput;
     switch (_timeUnit) {
-      case 'Years':
-        t = tInput;
-        break;
       case 'Months':
-        t = tInput / 12;
+        t /= 12;
         break;
       case 'Weeks':
-        t = tInput / 52;
+        t /= 52;
         break;
       case 'Days':
-        t = tInput / 365;
+        t /= 365;
         break;
-      default:
-        t = tInput;
     }
-    final freqMap = {'Daily': 365, 'Weekly': 52, 'Monthly': 12, 'Semi-Annual': 2, 'Annual': 1};
+    final freqMap = {
+      'Daily': 365,
+      'Weekly': 52,
+      'Monthly': 12,
+      'Semi-Annual': 2,
+      'Annual': 1
+    };
     final n = freqMap[_frequency]!;
     final amount = P * pow((1 + r / n), n * t);
     final result = amount.toStringAsFixed(widget.precision);
 
-  showModalBottomSheet(
-  context: context,
-  isScrollControlled: true,
-  backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-  shape: const RoundedRectangleBorder(
-    borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-  ),
-  builder: (context) => DraggableScrollableSheet(
-    initialChildSize: 0.4,  // Slightly smaller initial size
-    minChildSize: 0.4,
-    maxChildSize: 0.9,
-    expand: false,
-    builder: (context, scrollController) => Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Column(
-        children: [
-          // Improved drag handle with better visibility
-          Container(
-            margin: const EdgeInsets.symmetric(vertical: 12),
-            width: 48,
-            height: 6,
-            decoration: BoxDecoration(
-              color: Colors.grey[400],
-              borderRadius: BorderRadius.circular(3),
-            ),
-          ),
-          // Header with title and close button
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Calculated Result',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.close),
-                onPressed: () => Navigator.pop(context),
-              ),
-            ],
-          ),
-          const Divider(),
-          // Main content area with proper spacing
-          Expanded(
-            child: ListView(
-              controller: scrollController,
-              shrinkWrap: true,
-              physics: const ClampingScrollPhysics(),
-              children: [
-                const SizedBox(height: 16),
-                // Result display with improved styling
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surfaceVariant,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    '${widget.currency}$result',
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-               
-                // const SizedBox(height: 8),
-                // Add more content here as needed
-              ],
-            ),
-          ),
-        ],
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => ResultSheet(
+        result: result,
+        currency: widget.currency,
       ),
-    ),
-  ),
-);
-
+    );
   }
 
   @override
@@ -223,9 +167,10 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Compounding Calculator'),
+        centerTitle: false,
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings),
+            icon: const Icon(Icons.settings_outlined),
             onPressed: () async {
               await Navigator.push(
                 context,
@@ -237,90 +182,224 @@ class _HomePageState extends State<HomePage> {
           )
         ],
       ),
-      body: Form(
-        key: _formKey,
-        child: Padding(
-          padding: const EdgeInsets.all(24),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(6),
+        child: Form(
+          key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              TextFormField(
-                controller: _principalController,
-                decoration: const InputDecoration(labelText: 'Principal Amount'),
-                  inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,10}'))],
-                keyboardType: TextInputType.number,
-                validator: (v) {
-                  final val = double.tryParse(v ?? '');
-                  if (val == null || val < 0) return 'Enter non-negative amount';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _rateController,
-                decoration: const InputDecoration(labelText: 'Annual Interest (%)'),
-                keyboardType: TextInputType.number,
-                validator: (v) {
-                  final val = double.tryParse(v ?? '');
-                  if (val == null || val < 0) return 'Enter non-negative rate';
-                  if (val > 100) return 'Rate ≤ 100%';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              Row(
+              _buildInputCard(
                 children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: _timeController,
-                      decoration: const InputDecoration(labelText: 'Time'),
-                        inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,10}'))],
-                      keyboardType: TextInputType.number,
-                      validator: (v) {
-                        final val = double.tryParse(v ?? '');
-                        if (val == null || val < 0) return 'Enter non-negative time';
-                        return null;
-                      },
-                    ),
+                  _buildCurrencyInput(
+                    controller: _principalController,
+                    label: 'Principal Amount',
+                    icon: Icons.account_balance_wallet_outlined,
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: DropdownButtonFormField<String>(
-                      value: _timeUnit,
-                      decoration: const InputDecoration(labelText: 'Unit'),
-                      items: const ['Years', 'Months', 'Weeks', 'Days']
-                          .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                          .toList(),
-                      onChanged: (v) => setState(() => _timeUnit = v!),
+                  const SizedBox(height: 20),
+                  _buildCurrencyInput(
+                    controller: _rateController,
+                    label: 'Annual Interest Rate (%)',
+                    icon: Icons.percent_outlined,
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: _buildCurrencyInput(
+                          controller: _timeController,
+                          label: 'Investment Duration',
+                          icon: Icons.timelapse_outlined,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: DropdownButtonFormField<String>(
+                          value: _timeUnit,
+                          decoration: InputDecoration(
+                            labelText: 'Unit',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          items: const ['Years', 'Months', 'Weeks', 'Days']
+                              .map((e) => DropdownMenuItem(
+                                    value: e,
+                                    child: Text(e),
+                                  ))
+                              .toList(),
+                          onChanged: (v) => setState(() => _timeUnit = v!),
+                          style: Theme.of(context).textTheme.bodyLarge,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  DropdownButtonFormField<String>(
+                    value: _frequency,
+                    decoration: InputDecoration(
+                      labelText: 'Compounding Frequency',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      prefixIcon: const Icon(Icons.autorenew_outlined),
                     ),
+                    items: const ['Daily', 'Weekly', 'Monthly', 'Semi-Annual', 'Annual']
+                        .map((e) => DropdownMenuItem(
+                              value: e,
+                              child: Text(e),
+                            ))
+                        .toList(),
+                    onChanged: (v) => setState(() => _frequency = v!),
+                    style: Theme.of(context).textTheme.bodyLarge,
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                value: _frequency,
-                decoration: const InputDecoration(labelText: 'Compounding Frequency'),
-                items: const ['Daily', 'Weekly', 'Monthly', 'Semi-Annual', 'Annual']
-                    .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                    .toList(),
-                onChanged: (v) => setState(() => _frequency = v!),
-              ),
               const SizedBox(height: 32),
-              ElevatedButton(
+              FilledButton.icon(
                 onPressed: _calculate,
-                style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
-                child: const Text('Calculate'),
+                icon: const Icon(Icons.calculate_outlined),
+                label: const Text('Calculate Compound Interest'),
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 18),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
               ),
+              if (_isAdLoaded && _bannerAd != null)
+                Container(
+                  margin: const EdgeInsets.only(top: 24),
+                  height: _bannerAd!.size.height.toDouble(),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    color: Theme.of(context).colorScheme.surfaceVariant,
+                  ),
+                  child: AdWidget(ad: _bannerAd!),
+                ),
             ],
           ),
         ),
       ),
-      bottomNavigationBar: _isAdLoaded && _bannerAd != null
-          ? SizedBox(
-              height: _bannerAd!.size.height.toDouble(),
-              child: AdWidget(ad: _bannerAd!),
-            )
-          : null,
+    );
+  }
+
+  Widget _buildInputCard({required List<Widget> children}) {
+    return Card(
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(10),
+        child: Column(
+          children: children,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCurrencyInput({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+  }) {
+    return TextFormField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(icon),
+        border: const OutlineInputBorder(),
+        floatingLabelBehavior: FloatingLabelBehavior.auto,
+      ),
+      inputFormatters: [
+        FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,10}')),
+      ],
+      keyboardType: TextInputType.number,
+      validator: (v) {
+        final val = double.tryParse(v ?? '');
+        if (val == null || val < 0) return 'Please enter a valid positive number';
+        return null;
+      },
+      style: Theme.of(context).textTheme.bodyLarge,
+    );
+  }
+}
+
+class ResultSheet extends StatelessWidget {
+  final String result;
+  final String currency;
+
+  const ResultSheet({super.key, required this.result, required this.currency});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 48,
+            height: 4,
+            margin: const EdgeInsets.only(bottom: 16),
+            decoration: BoxDecoration(
+              color: Theme.of(context).dividerColor,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          Text(
+            'Future Value',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 32),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primaryContainer,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Text(
+              '$currency$result',
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: Theme.of(context).colorScheme.onPrimaryContainer,
+                  ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          _buildBottomSheetAd(),
+          const SizedBox(height: 24),
+          FilledButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomSheetAd() {
+    return SizedBox(
+      height: AdSize.banner.height.toDouble(),
+      child: AdWidget(
+        ad: BannerAd(
+          adUnitId: _bannerAdUnitId,
+          size: AdSize.banner,
+          request: const AdRequest(),
+          listener: BannerAdListener(
+            onAdLoaded: (ad) => debugPrint('Banner ad loaded'),
+            onAdFailedToLoad: (ad, error) {
+              ad.dispose();
+              debugPrint('Banner ad failed to load: $error');
+            },
+          ),
+        )..load(),
+      ),
     );
   }
 }
@@ -353,21 +432,11 @@ class _SettingsPageState extends State<SettingsPage> {
     });
   }
 
-  Future<void> _saveBool(String key, bool val) async {
+  Future<void> _saveSettings() async {
     final p = await SharedPreferences.getInstance();
-    await p.setBool(key, val);
-    widget.onChange();
-  }
-
-  Future<void> _saveInt(String key, int val) async {
-    final p = await SharedPreferences.getInstance();
-    await p.setInt(key, val);
-    widget.onChange();
-  }
-
-  Future<void> _saveString(String key, String val) async {
-    final p = await SharedPreferences.getInstance();
-    await p.setString(key, val);
+    await p.setBool('darkMode', _darkMode);
+    await p.setInt('precision', _precision);
+    await p.setString('currency', _currency);
     widget.onChange();
   }
 
@@ -379,51 +448,99 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            SwitchListTile(
-              title: const Text('Dark Mode'),
-              value: _darkMode,
-              onChanged: (v) => setState(() {
-                _darkMode = v;
-                _saveBool('darkMode', v);
-              }),
-            ),
-            const SizedBox(height: 16),
-            ListTile(
-              title: const Text('Result Precision'),
-              trailing: DropdownButton<int>(
-                value: _precision,
-                items: List.generate(7, (i) => DropdownMenuItem(value: i, child: Text('$i'))).toList(),
-                onChanged: (v) {
-                  setState(() { _precision = v!; });
-                  _saveInt('precision', v!);
-                },
+      appBar: AppBar(
+        title: const Text('Settings'),
+        centerTitle: true,
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(10),
+        children: [
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'APPEARANCE',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          letterSpacing: 1.2,
+                          color: Theme.of(context).colorScheme.outline,
+                        ),
+                  ),
+                  const SizedBox(height: 12),
+                  SwitchListTile(
+                    title: const Text('Dark Mode'),
+                    value: _darkMode,
+                    onChanged: (v) => setState(() {
+                      _darkMode = v;
+                      _saveSettings();
+                    }),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 16),
-            ListTile(
-              title: const Text('Currency Symbol'),
-              trailing: DropdownButton<String>(
-                value: _currency,
-                items: const ['\$', '€', '₹', '£'].map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
-                onChanged: (v) {
-                  setState(() { _currency = v!; });
-                  _saveString('currency', v!);
-                },
+          ),
+          const SizedBox(height: 16),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'FORMATTING',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          letterSpacing: 1.2,
+                          color: Theme.of(context).colorScheme.outline,
+                        ),
+                  ),
+                  const SizedBox(height: 12),
+                  ListTile(
+                    leading: const Icon(Icons.format_list_numbered),
+                    title: const Text('Decimal Precision'),
+                    trailing: DropdownButton<int>(
+                      value: _precision,
+                      items: List.generate(7, (i) => DropdownMenuItem(
+                        value: i,
+                        child: Text('$i decimal${i == 1 ? '' : 's'}'),
+                      )),
+                      onChanged: (v) => setState(() {
+                        _precision = v!;
+                        _saveSettings();
+                      }),
+                    ),
+                  ),
+                  const Divider(height: 1),
+                  ListTile(
+                    leading: const Icon(Icons.currency_exchange),
+                    title: const Text('Currency Symbol'),
+                    trailing: DropdownButton<String>(
+                      value: _currency,
+                      items: const [
+                        DropdownMenuItem(value: '\$', child: Text('Dollar (\$)')),
+                        DropdownMenuItem(value: '€', child: Text('Euro (€)')),
+                        DropdownMenuItem(value: '£', child: Text('Pound (£)')),
+                        DropdownMenuItem(value: '₹', child: Text('Rupee (₹)')),
+                      ],
+                      onChanged: (v) => setState(() {
+                        _currency = v!;
+                        _saveSettings();
+                      }),
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 16),
-            ListTile(
-              title: const Text('Privacy Policy'),
-              onTap: _launchPrivacy,
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 24),
+          OutlinedButton(
+            onPressed: _launchPrivacy,
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 16)),
+            child: const Text('View Privacy Policy'),
+          ),
+        ],
       ),
     );
   }
