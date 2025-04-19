@@ -274,7 +274,7 @@ class _HomePageState extends State<HomePage> {
                   height: _bannerAd!.size.height.toDouble(),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
-                    color: Theme.of(context).colorScheme.surfaceVariant,
+                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
                   ),
                   child: AdWidget(ad: _bannerAd!),
                 ),
